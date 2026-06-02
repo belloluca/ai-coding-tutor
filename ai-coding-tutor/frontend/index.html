@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Coding Tutor</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar left-sidebar">
+            <h2>AI Coding Tutor</h2>
+            <p class="subtitle">Supporto allo studio della programmazione</p>
+
+            <nav class="mode-menu">
+                <button class="mode-btn active" data-mode="Tutor">Tutor</button>
+                <button class="mode-btn" data-mode="Debug codice">Debug codice</button>
+                <button class="mode-btn" data-mode="Esercizi">Esercizi</button>
+                <button class="mode-btn" data-mode="Quiz">Quiz</button>
+            </nav>
+        </aside>
+
+        <main class="chat-area">
+            <header class="chat-header">
+                <div>
+                    <h1>Assistente intelligente per il coding</h1>
+                    <p>Fai domande, incolla codice o chiedi esercizi personalizzati.</p>
+                </div>
+                <span class="status">Online</span>
+            </header>
+
+            <section id="chatMessages" class="chat-messages">
+                <div class="message ai-message">
+                    <strong>AI Tutor</strong>
+                    <p>Ciao! Posso aiutarti a studiare programmazione, correggere codice, creare esercizi o generare quiz.</p>
+                </div>
+
+                <div class="message user-message">
+                    <strong>Studente</strong>
+                    <p>Puoi spiegarmi le funzioni in C++?</p>
+                </div>
+
+                <div class="message ai-message">
+                    <strong>AI Tutor</strong>
+                    <p>Una funzione in C++ è un blocco di codice riutilizzabile che svolge un compito specifico.</p>
+                    <pre><code>int somma(int a, int b) {
+    return a + b;
+}</code></pre>
+                </div>
+            </section>
+
+            <form id="chatForm" class="input-area">
+                <input id="messageInput" type="text" placeholder="Scrivi una domanda o incolla del codice..." autocomplete="off">
+                <button type="submit">Invia</button>
+            </form>
+        </main>
+
+        <aside class="sidebar right-sidebar">
+            <section class="info-card">
+                <h3>Suggerimenti</h3>
+                <ul>
+                    <li>Chiedi spiegazioni passo passo.</li>
+                    <li>Incolla codice da correggere.</li>
+                    <li>Genera esercizi per argomento.</li>
+                </ul>
+            </section>
+
+            <section class="info-card">
+                <h3>Ultimi argomenti</h3>
+                <p>C++, funzioni, cicli, array, debugging.</p>
+            </section>
+
+            <section class="info-card">
+                <h3>Difficoltà</h3>
+                <select id="difficultySelect">
+                    <option>Base</option>
+                    <option>Intermedio</option>
+                    <option>Avanzato</option>
+                </select>
+            </section>
+        </aside>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
