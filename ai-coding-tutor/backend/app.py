@@ -155,7 +155,7 @@ def chat():
 
         return jsonify({
 
-            "response" : f"Errore nel collegamento con l'AI: {str(e)}" #str(e) rappresenta il testo di errore restituito dall'API
+            "response": "Il servizio AI non è momentaneamente disponibile oppure la quota gratuita è stata superata. Riprovare più tardi."
 
         })
 
