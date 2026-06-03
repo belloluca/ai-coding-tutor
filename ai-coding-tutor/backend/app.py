@@ -62,10 +62,10 @@ def chat():
 
         """
     else:
-            response = "Modalità non riconosciuta"
+        response = "Modalità non riconosciuta"
 
     return jsonify({
-        "response": f"Hai scritto: {message}. Modalità: {mode}"
+        "response": response
     })
 
 if __name__ == '__main__':
