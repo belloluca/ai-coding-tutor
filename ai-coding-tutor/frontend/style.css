@@ -187,3 +187,9 @@ select {
         max-width: 100%;
     }
 }
+
+.message p {
+
+    white-space: pre-line;
+
+}
