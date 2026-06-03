@@ -1,35 +1,30 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from ai_service import generate_ai_response
-from database import init_db, save_interaction, get_history
 
 app = Flask(__name__)
 CORS(app)
 
-init_db()
-
-@app.route('/api/chat', methods=['POST'])
+@app.route("/api/chat", methods=["POST"])
 def chat():
     data = request.get_json()
 
-    user_message = data.get('message', '').strip()
-    mode = data.get('mode', 'Tutor')
+    message = data.get("message", "")
+    mode = data.get("mode", "Tutor")
 
-    if not user_message:
-        return jsonify({'error': 'Messaggio vuoto'}), 400
-
-    ai_response = generate_ai_response(user_message, mode)
-    save_interaction(user_message, ai_response, mode)
+    if mode == "Tutor":
+        response = "Sono in modalità Tutor. Posso spiegarti l'argomento passo dopo passo."
+    elif mode == "Debug codice":
+        response = "Sono in modalità Debug codice. Posso aiutarti a individuare eventuali errori nel codice."
+    elif mode == "Esercizi":
+        response = "Sono in modalità Esercizi. Posso proporti un esercizio sull'argomento richiesto."
+    elif mode == "Quiz":
+        response = "Sono in modalità Quiz. Posso generare alcune domande per verificare la tua preparazione."
+    else:
+        response = "Modalità non riconosciuta."
 
     return jsonify({
-        'message': user_message,
-        'mode': mode,
-        'response': ai_response
+        "reply": response
     })
 
-@app.route('/api/history', methods=['GET'])
-def history():
-    return jsonify(get_history())
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True, port=5000)
