@@ -35,24 +35,21 @@ chatForm.addEventListener('submit', async (event) => {
         });
 
         const data = await response.json();
-        addMessage('AI Tutor', data.response || 'Errore nella risposta.', 'ai-message');
+        addMessage('AI Tutor', data.response || 'Errore nella risposta.', 'ai-message', selectedMode);
     } catch (error) {
         addMessage('Sistema', 'Impossibile collegarsi al server Flask.', 'ai-message');
     }
 });
 
-function addMessage(author, text, className) {
-    const messageBox = document.createElement('div');
-    messageBox.className = `message ${className}`;
+function addMessage(sender, text, className, mode = '') {
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message', className);
 
-    const title = document.createElement('strong');
-    title.textContent = author;
+    messageElement.innerHTML = `
+        <strong>${sender}</strong>
+        ${mode ? `<small>Modalità: ${mode}</small>` : ''}
+        <p>${text}</p>
+    `;
 
-    const paragraph = document.createElement('p');
-    paragraph.textContent = text;
-
-    messageBox.appendChild(title);
-    messageBox.appendChild(paragraph);
-    chatMessages.appendChild(messageBox);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    chatMessages.appendChild(messageElement);
 }
