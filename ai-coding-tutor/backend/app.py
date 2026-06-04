@@ -6,8 +6,8 @@ import os #os: serve per leggere variabili d’ambiente del sistema.
 
 load_dotenv() #leggo il file .env che contiene la key all'API AI
 
-app = Flask(__name__)
-CORS(app)
+app = Flask(__name__) # Creo l'app Flask affinché riceva le richieste dal front-end
+CORS(app) # Avvia CORS sull'app Flask
 
 client = genai.Client(api_key = os.getenv("GEMINI_API_KEY")) #Creo il client che si collegherà con Gemini e leggo la key contenuta nella variabile "GEMINI_API_KEY" nell'ambiente .env
 
@@ -141,7 +141,7 @@ def chat():
             Non aggiungere informazioni non richieste.
         """
 
-        ai_response = client.models.generate_content(model = "gemini-2.0-flash-lite", contents = prompt) #Invio la richiesta a gemini indicando il modello ed il contenuto
+        ai_response = client.models.generate_content(model = "gemini-2.0-flash-lite", contents = prompt) #Invio la richiesta a gemini indicando il modello ed il contenuto tramite il client creato in precedenza
 
         #Invio la risposta in formato JSON al front-end
         return jsonify({

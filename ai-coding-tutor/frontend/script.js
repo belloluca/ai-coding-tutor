@@ -39,7 +39,7 @@ chatForm.addEventListener('submit', async (event) => {
 
         const data = await response.json(); // Leggo la risposta ricevuta dal server Flask
         
-        // Mostro la risposta nella chat, e nel caso di errore lo gestisco
+        // Mostro la risposta nella chat, e nel caso di errore la gestisco
         addMessage('AI Tutor', data.response || 'Errore nella risposta.', 'ai-message', selectedMode);
     } catch (error) {
         addMessage('Sistema', 'Impossibile collegarsi al server Flask.', 'ai-message');
