@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrazione - AI Coding Tutor</title>
+  <link rel="stylesheet" href="style_registrazione.css">
+</head>
+
+<body class="auth-page">
+
+  <main class="auth-box">
+
+    <header>
+      <h1>Registrazione</h1>
+      <p>Crea un account per accedere alle funzionalità personalizzate del chatbot.</p>
+    </header>
+
+    <form id="FormRegistrazione">
+
+      <div class="field">
+        <label for="nome">Nome</label>
+        <input id="nome" name="nome" type="text" required>
+      </div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required>
+      </div>
+
+      <label class="privacy">
+        <input id="privacy" name="privacy" type="checkbox" required>
+        <span>Accetto il trattamento dei dati necessari per utilizzare il servizio.</span>
+      </label>
+
+      <div id="feedback" class="feedback"></div>
+
+      <div class="actions">
+        <a href="Home_page.html">Torna alla Home Page</a>
+        <button type="submit">Registrati</button>
+      </div>
+
+    </form>
+
+  </main>
+
+  <script>
+    const form = document.querySelector("#FormRegistrazione");
+    const feedback = document.querySelector("#feedback");
+
+    form.addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const nome = form.nome.value.trim();
+      const email = form.email.value.trim();
+      const password = form.password.value;
+      const privacy = form.privacy.checked;
+
+      feedback.className = "feedback";
+
+      if (!nome || !email || !password) {
+        feedback.textContent = "Compila tutti i campi.";
+        feedback.classList.add("error");
+        return;
+      }
+
+      if (!privacy) {
+        feedback.textContent = "Devi accettare il trattamento dei dati.";
+        feedback.classList.add("error");
+        return;
+      }
+
+      localStorage.setItem("utenteChatbot", JSON.stringify({
+        nome: nome,
+        email: email,
+        password: password
+      }));
+
+      feedback.textContent = "Registrazione completata. Ora puoi effettuare il login.";
+      feedback.classList.add("success");
+
+      form.reset();
+    });
+  </script>
+
+</body>
+</html>

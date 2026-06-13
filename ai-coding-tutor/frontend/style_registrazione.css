@@ -1,0 +1,168 @@
+:root {
+  --surface: #ffffff;
+  --ink: #1f2937;
+  --muted: #667085;
+  --line: #d9e2ef;
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --danger: #b42318;
+  --success: #087443;
+  --shadow: 0 18px 45px rgba(31, 41, 55, .12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body.auth-page {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--ink);
+  background: linear-gradient(135deg, #f4f7fb 0%, #e8f1ff 58%, #f7fafc 100%);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-box {
+  width: min(720px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.auth-box header {
+  padding: 24px 28px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.auth-box h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+
+.auth-box p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+form {
+  padding: 24px 28px 28px;
+  display: grid;
+  gap: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0 13px;
+  font-size: 15px;
+}
+
+input:focus {
+  border-color: var(--primary);
+  outline: 3px solid rgba(37, 99, 235, .16);
+}
+
+.privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.privacy input {
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin-top: 1px;
+}
+
+.feedback {
+  min-height: 20px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.error {
+  color: var(--danger);
+}
+
+.success {
+  color: var(--success);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+a {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 18px;
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--primary-dark);
+}
+
+@media (max-width: 560px) {
+  body.auth-page {
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .auth-box {
+    min-height: 100vh;
+    border-radius: 0;
+  }
+
+  .auth-box header,
+  form {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  button {
+    width: 100%;
+  }
+}
