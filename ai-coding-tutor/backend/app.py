@@ -161,34 +161,55 @@ def chat():
 
         })
     
+# Rotta API per la registrazione di un nuovo utente.
+# Viene chiamata dal front-end quando l'utente compila il form di registrazione.
 @app.route("/api/register", methods=["POST"])
 def register():
+
+    # Recupera i dati inviati dal front-end in formato JSON.
     data = request.get_json()
 
+    # Estrae dal JSON i singoli campi inseriti dall'utente.
     nome = data.get("nome")
     email = data.get("email")
     password = data.get("password")
 
+    # Controlla che tutti i campi obbligatori siano stati compilati.
+    # Se manca anche solo un campo, restituisce un messaggio di errore.
     if not nome or not email or not password:
         return jsonify({"error": "Compila tutti i campi"}), 400
 
+    # Cifra la password tramite hashing.
+    # In questo modo nel database non viene salvata la password originale.
     password_hash = generate_password_hash(password)
 
     try:
+        # Apre la connessione al database SQLite.
         conn = sqlite3.connect("database.db")
+
+        # Crea un cursore, cioè l'oggetto usato per eseguire query SQL.
         cursor = conn.cursor()
 
+        # Inserisce il nuovo utente nella tabella users.
+        # I punti interrogativi evitano problemi di sicurezza come SQL injection.
         cursor.execute("""
             INSERT INTO users (nome, email, password)
             VALUES (?, ?, ?)
         """, (nome, email, password_hash))
 
+        # Salva definitivamente le modifiche nel database.
         conn.commit()
+
+        # Chiude la connessione al database.
         conn.close()
 
+        # Restituisce al front-end un messaggio di successo.
+        # Il codice 201 indica che la risorsa è stata creata correttamente.
         return jsonify({"message": "Registrazione completata"}), 201
 
     except sqlite3.IntegrityError:
+        # Questo errore viene generato, ad esempio, se l'email è già presente
+        # nel database e la colonna email è impostata come UNIQUE.
         return jsonify({"error": "Email già registrata"}), 409
 
 #Avvio del server Flask
