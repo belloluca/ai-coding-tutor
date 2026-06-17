@@ -3,6 +3,8 @@ from flask_cors import CORS #CORS: serve al frontend JavaScript di comunicare co
 from google import genai #importo la libreria principale di Google GenAI
 from dotenv import load_dotenv #load_dotenv: serve per leggere variabili da un file 
 import os #os: serve per leggere variabili d’ambiente del sistema.
+import sqlite3
+from werkzeug.security import generate_password_hash
 
 load_dotenv() #leggo il file .env che contiene la key all'API AI
 
@@ -158,6 +160,36 @@ def chat():
             "response": "Il servizio AI non è momentaneamente disponibile oppure la quota gratuita è stata superata. Riprovare più tardi."
 
         })
+    
+@app.route("/api/register", methods=["POST"])
+def register():
+    data = request.get_json()
+
+    nome = data.get("nome")
+    email = data.get("email")
+    password = data.get("password")
+
+    if not nome or not email or not password:
+        return jsonify({"error": "Compila tutti i campi"}), 400
+
+    password_hash = generate_password_hash(password)
+
+    try:
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            INSERT INTO users (nome, email, password)
+            VALUES (?, ?, ?)
+        """, (nome, email, password_hash))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "Registrazione completata"}), 201
+
+    except sqlite3.IntegrityError:
+        return jsonify({"error": "Email già registrata"}), 409
 
 #Avvio del server Flask
 if __name__ == '__main__':
