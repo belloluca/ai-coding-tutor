@@ -85,6 +85,7 @@ body {
     border-radius: 999px;
     font-size: 14px;
     font-weight: bold;
+    margin-bottom: 5px;
 }
 
 .chat-messages {
@@ -295,4 +296,25 @@ small {
     margin-bottom: 14px;
     font-size: 18px;
     color: #0f172a;
-}   
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logout-btn {
+    border: none;
+    padding: 9px 14px;
+    margin-bottom: 5px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.logout-btn:hover {
+    background: #dc2626;
+}

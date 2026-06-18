@@ -1,9 +1,19 @@
+// Estraggo i dati dell'utente
+const utenteLoggato = JSON.parse(localStorage.getItem("utenteLoggato"));
+
+// Verifico che l'utente sia loggato
+if (!utenteLoggato) {
+    alert("Devi effettuare il login per accedere alla chat.");
+    window.location.href = "login.html";
+}
+
 const chatForm = document.getElementById('chatForm'); // Il form della chat
 const messageInput = document.getElementById('messageInput'); // Il campo dove viene scritto il messaggio
 const chatMessages = document.getElementById('chatMessages'); // Il contenitore dove vengono mostrati i messaggi
 const modeButtons = document.querySelectorAll('.mode-btn'); // I pulsanti con le varie modalità
 const historyList = document.getElementById("historyList"); // Il contenitore in cui è presente lo storico delle chat
 const newChatBtn = document.getElementById("newChatBtn"); // Il contenitore che permette di creare la nuova chat
+const logoutBtn = document.getElementById("logoutBtn"); // Il contenitore che permette di effettuare il Logout
 
 let selectedMode = 'Tutor'; // Selezione come modalità predefinita 'Tutor'
 
@@ -132,12 +142,19 @@ async function caricaStorico() {
 
 }
 
+// Funzione per la creazione di una nuova conversazione
 newChatBtn.addEventListener("click", () => {
     chatMessages.innerHTML = "";
 
     addMessage("AI Tutor", "Come posso aiutarti?", "ai-message");
 
     messageInput.value = "";
+});
+
+// Funzione che permette di effettuare il Logout
+logoutBtn.addEventListener("click", () => {
+    localStorage.removeItem("utenteLoggato");
+    window.location.href = "login.html";
 });
 
 caricaStorico();
