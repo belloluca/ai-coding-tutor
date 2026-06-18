@@ -14,6 +14,7 @@ CORS(app) # Avvia CORS sull'app Flask
 
 client = genai.Client(api_key = os.getenv("GEMINI_API_KEY")) #Creo il client che si collegherà con Gemini e leggo la key contenuta nella variabile "GEMINI_API_KEY" nell'ambiente .env
 
+# Rotta API per la chat dell'utente
 @app.route('/api/chat', methods=['POST']) #Permette di avviare la funzione sottostante quando il front-end riceve una richiesta con il metodo: POST
 def chat():
 
@@ -22,6 +23,7 @@ def chat():
     #Distinguo il messaggio dalla modalità
     message = data.get('message', '')
     mode = data.get('mode', 'Tutor')
+    user_id = data.get("user_id", '')
 
     #Verifico la modalità selezionata e mando un prompt inerente all'API AI
     if mode == 'Tutor':
@@ -144,11 +146,26 @@ def chat():
             Non aggiungere informazioni non richieste.
         """
 
-        ai_response = client.models.generate_content(model = "gemini-2.0-flash-lite", contents = prompt) #Invio la richiesta a gemini indicando il modello ed il contenuto tramite il client creato in precedenza
+        ai_response = client.models.generate_content(model = "gemini-2.5-flash-lite", contents = prompt) #Invio la richiesta a gemini indicando il modello ed il contenuto tramite il client creato in precedenza
+
+        # Estraggo il testo dalla risposta ricevuta dall'AI
+        ai_text = ai_response.text
+
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
+
+        # Invio la query per il salvataggio della chat
+        cursor.execute("""
+            INSERT INTO chats (user_id, modalita, messaggio_utente, risposta_ai)
+            VALUES (?, ?, ?, ?)
+        """, (user_id, mode, message, ai_text))
+
+        conn.commit()
+        conn.close()
 
         #Invio la risposta in formato JSON al front-end
         return jsonify({
-            "response": ai_response.text #Conservo in response solamente il testo della risposta
+            "response": ai_text #Conservo in response solamente il testo della risposta
         })
     
     
@@ -162,7 +179,7 @@ def chat():
 
         })
     
-# Rotta API per la registrazione di un nuovo utente.
+# Rotta API per la registrazione di un nuovo utente
 # Viene chiamata dal front-end quando l'utente compila il form di registrazione.
 @app.route("/api/register", methods=["POST"])
 def register():
@@ -269,6 +286,36 @@ def login():
             "email": email_db
         }
     }), 200
+
+# Rotta API per mostrare lo storico delle chat dell'utente
+@app.route("/api/history/<int:user_id>", methods=["GET"])
+def history(user_id):
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT modalita, messaggio_utente, risposta_ai, creato_il
+        FROM chats
+        WHERE user_id = ?
+        ORDER BY creato_il DESC
+    """, (user_id,))
+
+    chats = cursor.fetchall()
+    conn.close()
+
+    # Vettore che conterrà le chat
+    history = []
+
+    # Le informazioni ricavate dalla tabella 'chats' verranno inserite nel vettore
+    for chat in chats:
+        history.append({
+            "modalita": chat[0],
+            "messaggio_utente": chat[1],
+            "risposta_ai": chat[2],
+            "creato_il": chat[3]
+        })
+
+    return jsonify(history), 200
 
 #Avvio del server Flask
 if __name__ == '__main__':
