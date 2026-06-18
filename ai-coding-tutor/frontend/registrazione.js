@@ -80,12 +80,4 @@ form.addEventListener("submit", async function(event) {
   // Svuota tutti i campi del form.
   form.reset();
 
-  // Questa parte è ridondante perché il messaggio e il reset
-  // sono già stati eseguiti nelle righe precedenti.
-  // Può essere eliminata senza modificare il funzionamento.
-  feedback.textContent = "Registrazione completata. Ora puoi effettuare il login.";
-  feedback.classList.add("success");
-
-  form.reset();
-
 });
