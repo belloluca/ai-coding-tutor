@@ -24,6 +24,10 @@ chatForm.addEventListener('submit', async (event) => {
     addMessage('Studente', message, 'user-message'); // Mostro nella chat il messaggio dello studente
     messageInput.value = ''; // Svuoto l'input
 
+    // Messaggio temporaneo
+    const thinkingMessage = addMessage('AI Tutor', 'Sta pensando...', 'ai-message');
+
+
     // Effettuo una richiesta HTTP POST al server Flask nel formato JSON
     try {
         const response = await fetch('http://localhost:5000/api/chat', {
@@ -39,6 +43,9 @@ chatForm.addEventListener('submit', async (event) => {
 
         const data = await response.json(); // Leggo la risposta ricevuta dal server Flask
         
+        // Rimuovo il messaggio temporaneo
+        thinkingMessage.remove();
+
         // Mostro la risposta nella chat, e nel caso di errore la gestisco
         addMessage('AI Tutor', data.response || 'Errore nella risposta.', 'ai-message', selectedMode);
     } catch (error) {
