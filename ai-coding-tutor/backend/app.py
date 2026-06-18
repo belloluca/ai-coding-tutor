@@ -6,6 +6,9 @@ import os #os: serve per leggere variabili d’ambiente del sistema.
 import sqlite3 # Libreria usata per connettersi e interagire con il database SQLite
 from werkzeug.security import generate_password_hash # Funzione usata per generare l'hash della password prima di salvarla nel database durante la registrazione
 from werkzeug.security import check_password_hash # Funzione usata durante il login per verificare se la password inserita corrisponde all'hash salvato nel database
+import secrets # Serve per creare un token univoco, usato per la conferma dell'email
+import smtplib # Usato per utilizzare i servizi del protocollo SMTP
+from email.mime.text import MIMEText # Gestisce la creazione del contenuto dell'email.
 
 load_dotenv() #leggo il file .env che contiene la key all'API AI
 
@@ -201,6 +204,9 @@ def register():
     # In questo modo nel database non viene salvata la password originale.
     password_hash = generate_password_hash(password)
 
+    # 
+    token = secrets.token_urlsafe(32)
+
     try:
         # Apre la connessione al database SQLite.
         conn = sqlite3.connect("database.db")
@@ -211,9 +217,12 @@ def register():
         # Inserisce il nuovo utente nella tabella users.
         # I punti interrogativi evitano problemi di sicurezza come SQL injection.
         cursor.execute("""
-            INSERT INTO users (nome, email, password)
-            VALUES (?, ?, ?)
-        """, (nome, email, password_hash))
+            INSERT INTO users (nome, email, password, email_verificata, token_conferma)
+            VALUES (?, ?, ?, ?, ?)
+        """, (nome, email, password_hash, 0, token))
+
+        # Invio l'email di conferma nella posta elettronica dell'utente
+        send_confirmation_email(email, token)
 
         # Salva definitivamente le modifiche nel database.
         conn.commit()
@@ -223,12 +232,136 @@ def register():
 
         # Restituisce al front-end un messaggio di successo.
         # Il codice 201 indica che la risorsa è stata creata correttamente.
-        return jsonify({"message": "Registrazione completata"}), 201
+        return jsonify({
+            "message": "Registrazione quasi completata. Controlla la tua email per confermare l'account."
+        }), 201
 
     except sqlite3.IntegrityError:
         # Questo errore viene generato, ad esempio, se l'email è già presente
         # nel database e la colonna email è impostata come UNIQUE.
         return jsonify({"error": "Email già registrata"}), 409
+
+
+# Rotta API per la conferma dell'email
+@app.route("/api/confirm-email/<token>", methods=["GET"])
+def confirm_email(token):
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id
+        FROM users
+        WHERE token_conferma = ?
+    """, (token,))
+
+    user = cursor.fetchone()
+
+    if user is None:
+        conn.close()
+        return "Token non valido o già utilizzato."
+
+    cursor.execute("""
+        UPDATE users
+        SET email_verificata = 1,
+            token_conferma = NULL
+        WHERE token_conferma = ?
+    """, (token,))
+
+    conn.commit()
+    conn.close()
+
+    return """
+        <!DOCTYPE html>
+        <html lang="it">
+        <head>
+            <meta charset="UTF-8">
+            <title>Email confermata</title>
+            <style>
+                * {
+                    box-sizing: border-box;
+                    margin: 0;
+                    padding: 0;
+                }
+
+                body {
+                    font-family: Arial, Helvetica, sans-serif;
+                    background: #eef3f8;
+                    color: #1f2937;
+                    min-height: 100vh;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
+
+                .card {
+                    background: white;
+                    padding: 40px;
+                    border-radius: 18px;
+                    box-shadow: 0 8px 25px rgba(15, 23, 42, 0.12);
+                    text-align: center;
+                    max-width: 460px;
+                    width: 90%;
+                }
+
+                .icon {
+                    width: 70px;
+                    height: 70px;
+                    margin: 0 auto 20px;
+                    border-radius: 50%;
+                    background: #dcfce7;
+                    color: #166534;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    font-size: 38px;
+                    font-weight: bold;
+                }
+
+                h1 {
+                    font-size: 26px;
+                    margin-bottom: 12px;
+                    color: #0f172a;
+                }
+
+                p {
+                    color: #64748b;
+                    line-height: 1.6;
+                    margin-bottom: 24px;
+                }
+
+                a {
+                    text-decoration: none;
+                }
+
+                button {
+                    border: none;
+                    padding: 13px 22px;
+                    border-radius: 12px;
+                    background: #2563eb;
+                    color: white;
+                    font-weight: bold;
+                    font-size: 15px;
+                    cursor: pointer;
+                }
+
+                button:hover {
+                    background: #1d4ed8;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <div class="icon">✓</div>
+                <h1>Registrazione avvenuta con successo</h1>
+                <p>
+                    La tua email è stata verificata correttamente.
+                    Ora puoi accedere ad AI Coding Tutor con le tue credenziali.
+                </p>
+
+            </div>
+        </body>
+        </html>
+        """
     
 # Rotta API per il login di un utente.
 # Viene chiamata dal front-end quando l'utente compila il form di login.
@@ -253,7 +386,7 @@ def login():
 
     # Invio la query al database
     cursor.execute("""
-        SELECT id, nome, email, password
+        SELECT id, nome, email, password, email_verificata
         FROM users
         WHERE email = ?
     """, (email,))
@@ -272,6 +405,11 @@ def login():
     nome = user[1]
     email_db = user[2]
     password_hash = user[3]
+    email_verificata = user[4]
+
+    # Verifico che l'email sia stata confermata
+    if email_verificata == 0:
+        return jsonify({"error": "Devi confermare la tua email prima di accedere"}), 403
 
     # Verifico che la password sia corretta
     if not check_password_hash(password_hash, password):
@@ -316,6 +454,42 @@ def history(user_id):
         })
 
     return jsonify(history), 200
+
+# Funzione per la conferma dell'email
+def send_confirmation_email(to_email, token):
+    # Crea il link di conferma.
+    link = f"http://127.0.0.1:5000/api/confirm-email/{token}"
+
+    # Imposta l’oggetto dell’email.
+    subject = "Conferma registrazione AI Coding Tutor"
+
+    # Crea il testo dell’email.
+    body = f"""
+Ciao,
+
+grazie per esserti registrato ad AI Coding Tutor.
+
+Clicca sul link seguente per confermare la tua email:
+
+{link}
+
+Se non hai richiesto questa registrazione, ignora questa email.
+"""
+    # Crea il messaggio email vero e proprio
+    msg = MIMEText(body, "plain", "utf-8")
+    # Imposto i vari campi
+    msg["Subject"] = subject
+    msg["From"] = os.getenv("EMAIL_USER")
+    msg["To"] = to_email
+
+    # Apre una connessione al server SMTP di Gmail
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        # Attiva la connessione sicura.
+        server.starttls()
+        # Effettua il login all’account email mittente e Legge dal .env
+        server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASSWORD"))
+        # Invia l’email al destinatario.
+        server.send_message(msg)
 
 #Avvio del server Flask
 if __name__ == '__main__':

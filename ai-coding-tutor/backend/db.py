@@ -6,13 +6,22 @@ conn = sqlite3.connect("database.db")
 # Creazione del cursore per eseguire query SQL
 cursor = conn.cursor()
 
+cursor.execute("DROP TABLE IF EXISTS users")
+
 # Creazione della tabella dedicata agli utenti
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL
+    password TEXT NOT NULL,
+
+    -- 0 = email non verificata
+    -- 1 = email verificata
+    email_verificata INTEGER NOT NULL DEFAULT 0,
+
+    -- Token univoco utilizzato per confermare l'indirizzo email
+    token_conferma TEXT
 )
 """)
 
