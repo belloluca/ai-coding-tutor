@@ -3,8 +3,9 @@ from flask_cors import CORS #CORS: serve al frontend JavaScript di comunicare co
 from google import genai #importo la libreria principale di Google GenAI
 from dotenv import load_dotenv #load_dotenv: serve per leggere variabili da un file 
 import os #os: serve per leggere variabili d’ambiente del sistema.
-import sqlite3
-from werkzeug.security import generate_password_hash
+import sqlite3 # Libreria usata per connettersi e interagire con il database SQLite
+from werkzeug.security import generate_password_hash # Funzione usata per generare l'hash della password prima di salvarla nel database durante la registrazione
+from werkzeug.security import check_password_hash # Funzione usata durante il login per verificare se la password inserita corrisponde all'hash salvato nel database
 
 load_dotenv() #leggo il file .env che contiene la key all'API AI
 
@@ -211,6 +212,63 @@ def register():
         # Questo errore viene generato, ad esempio, se l'email è già presente
         # nel database e la colonna email è impostata come UNIQUE.
         return jsonify({"error": "Email già registrata"}), 409
+    
+# Rotta API per il login di un utente.
+# Viene chiamata dal front-end quando l'utente compila il form di login.
+@app.route("/api/login", methods=["POST"])
+def login():
+
+    # Salva i dati ricevuti dal front-end in formato JSON
+    data = request.get_json()
+
+    # Raccolgo in due variabili email e password dell'utente
+    email = data.get("email")
+    password = data.get("password")
+
+    # Verifico che i campi siano compilati, in caso contrario invio un messaggio di errore
+    if not email or not password:
+        return jsonify({"error": "Compila tutti i campi"}), 400
+
+    # Mi connetto con il database SQLite
+    conn = sqlite3.connect("database.db")
+    # Creo il cursore per interfacciarmi con il database
+    cursor = conn.cursor()
+
+    # Invio la query al database
+    cursor.execute("""
+        SELECT id, nome, email, password
+        FROM users
+        WHERE email = ?
+    """, (email,))
+
+    # Salvo l'utente
+    user = cursor.fetchone()
+    # Chiudo la connessione con il database
+    conn.close()
+
+    # Verifico che l'elemento non sia vuoto
+    if user is None:
+        return jsonify({"error": "Email o password non corretti"}), 401
+
+    # Raccolgo i vari campi dell'utente
+    user_id = user[0]
+    nome = user[1]
+    email_db = user[2]
+    password_hash = user[3]
+
+    # Verifico che la password sia corretta
+    if not check_password_hash(password_hash, password):
+        return jsonify({"error": "Email o password non corretti"}), 401
+
+    # Invio la risposta di successo al frontend
+    return jsonify({
+        "message": "Login effettuato con successo",
+        "user": {
+            "id": user_id,
+            "nome": nome,
+            "email": email_db
+        }
+    }), 200
 
 #Avvio del server Flask
 if __name__ == '__main__':
