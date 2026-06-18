@@ -2,6 +2,7 @@ const chatForm = document.getElementById('chatForm'); // Il form della chat
 const messageInput = document.getElementById('messageInput'); // Il campo dove viene scritto il messaggio
 const chatMessages = document.getElementById('chatMessages'); // Il contenitore dove vengono mostrati i messaggi
 const modeButtons = document.querySelectorAll('.mode-btn'); // I pulsanti con le varie modalità
+const historyList = document.getElementById("historyList"); // Il contenitore in cui è presente lo storico delle chat
 
 let selectedMode = 'Tutor'; // Selezione come modalità predefinita 'Tutor'
 
@@ -58,6 +59,7 @@ chatForm.addEventListener('submit', async (event) => {
 
         // Mostro la risposta nella chat, e nel caso di errore la gestisco
         addMessage('AI Tutor', data.response || 'Errore nella risposta.', 'ai-message', selectedMode);
+        caricaStorico();
     } catch (error) {
         thinkingMessage.remove();
         addMessage('Sistema', 'Impossibile collegarsi al server Flask.', 'ai-message');
@@ -99,8 +101,34 @@ async function caricaStorico() {
     // Converto la risposta ricevuta dal server Flask in formato JSON
     const history = await response.json();
 
-    // Mostro in console le varie chat
-    console.log(history);
+    // Svuota la chat attuale nella schermata principale.
+    historyList.innerHTML = "";
+
+    // Scorre ogni elemento dell’array history, ogni elemento viene chiamato chat
+    history.forEach(chat => {
+
+        // Crea un nuovo div HTML e gli assegna la classe CSS history-item
+        const item = document.createElement("div");
+        item.classList.add("history-item");
+
+        // Scrive dentro il blocco la modalità e la data della chat
+        item.innerHTML = `
+            <strong>${chat.modalita}</strong>
+            <span>${chat.creato_il}</span>
+        `;
+
+        // Aggiunge un evento: quando clicchi su quella chat nello storico, viene eseguito il codice dentro
+        item.addEventListener("click", () => {
+            chatMessages.innerHTML = "";
+
+            addMessage("Studente", chat.messaggio_utente, "user-message");
+            addMessage("AI Tutor", chat.risposta_ai, "ai-message", chat.modalita);
+        });
+
+        // Aggiunge il blocco creato dentro il contenitore dello storico.
+        historyList.appendChild(item);
+    });
+
 }
 
 caricaStorico();

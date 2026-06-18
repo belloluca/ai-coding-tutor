@@ -12,7 +12,7 @@ body {
 
 .app-container {
     display: grid;
-    grid-template-columns: 260px 1fr;
+    grid-template-columns: 260px 1fr 280px;
     gap: 24px;
     min-height: 100vh;
 }
@@ -55,7 +55,7 @@ body {
 .chat-area {
     display: flex;
     flex-direction: column;
-    padding: 24px;
+    padding: 24px 0;
 }
 
 .chat-header {
@@ -109,6 +109,10 @@ body {
     margin-bottom: 6px;
 }
 
+.message p {
+    white-space: pre-line;
+}
+
 .ai-message {
     background: #f1f5f9;
 }
@@ -116,6 +120,16 @@ body {
 .user-message {
     background: #dbeafe;
     margin-left: auto;
+}
+
+.mode-label {
+    display: inline-block;
+    background: #dbeafe;
+    color: #1d4ed8;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    margin-bottom: 8px;
 }
 
 pre {
@@ -151,6 +165,10 @@ pre {
     cursor: pointer;
 }
 
+.input-area button:hover {
+    background: #1d4ed8;
+}
+
 .info-card {
     background: #f8fafc;
     padding: 18px;
@@ -174,32 +192,84 @@ select {
     border: 1px solid #cbd5e1;
 }
 
-@media (max-width: 1000px) {
-    .app-container {
-        grid-template-columns: 1fr;
-    }
-
-    .sidebar {
-        border: none;
-    }
-
-    .message {
-        max-width: 100%;
-    }
-}
-
-.message p {
-
-    white-space: pre-line;
-
-}
-
-small{
-
+small {
     display: block;
     margin-top: 3px;
     color: #6b7280;
     margin-bottom: 10px;
     font-size: 1rem;
+}
 
+/* Sidebar destra dello storico */
+.history-sidebar {
+    background: #ffffff;
+    padding: 24px;
+    border-left: 1px solid #dce3ea;
+    overflow-y: auto;
+}
+
+.history-section {
+    margin-top: 0;
+    padding: 0;
+}
+
+.history-section h3 {
+    font-size: 18px;
+    margin-bottom: 16px;
+    color: #0f172a;
+}
+
+#historyList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.history-item {
+    background-color: #f1f5f9;
+    color: #1e293b;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid #e2e8f0;
+    transition: 0.2s;
+}
+
+.history-item:hover {
+    background-color: #2563eb;
+    color: white;
+    transform: translateX(-3px);
+}
+
+.history-item strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.history-item span {
+    display: block;
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+/* Responsive */
+@media (max-width: 1000px) {
+    .app-container {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar,
+    .history-sidebar {
+        border: none;
+    }
+
+    .chat-area {
+        padding: 24px;
+    }
+
+    .message {
+        max-width: 100%;
+    }
 }
