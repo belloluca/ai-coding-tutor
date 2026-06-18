@@ -217,7 +217,7 @@ small {
     font-size: 18px;
     margin-bottom: 16px;
     color: #0f172a;
-}
+}   
 
 #historyList {
     display: flex;
@@ -273,3 +273,26 @@ small {
         max-width: 100%;
     }
 }
+
+.new-chat-btn {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border: none;
+    border-radius: 12px;
+    background: #2563eb;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.new-chat-btn:hover {
+    background: #1d4ed8;
+}
+
+.history-title {
+    margin-top: 20px;
+    margin-bottom: 14px;
+    font-size: 18px;
+    color: #0f172a;
+}   

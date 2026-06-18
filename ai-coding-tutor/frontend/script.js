@@ -3,6 +3,7 @@ const messageInput = document.getElementById('messageInput'); // Il campo dove v
 const chatMessages = document.getElementById('chatMessages'); // Il contenitore dove vengono mostrati i messaggi
 const modeButtons = document.querySelectorAll('.mode-btn'); // I pulsanti con le varie modalità
 const historyList = document.getElementById("historyList"); // Il contenitore in cui è presente lo storico delle chat
+const newChatBtn = document.getElementById("newChatBtn"); // Il contenitore che permette di creare la nuova chat
 
 let selectedMode = 'Tutor'; // Selezione come modalità predefinita 'Tutor'
 
@@ -130,5 +131,13 @@ async function caricaStorico() {
     });
 
 }
+
+newChatBtn.addEventListener("click", () => {
+    chatMessages.innerHTML = "";
+
+    addMessage("AI Tutor", "Come posso aiutarti?", "ai-message");
+
+    messageInput.value = "";
+});
 
 caricaStorico();
