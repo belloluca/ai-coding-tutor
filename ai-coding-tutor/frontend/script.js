@@ -122,10 +122,14 @@ async function caricaStorico() {
         const item = document.createElement("div");
         item.classList.add("history-item");
 
-        // Scrive dentro il blocco la modalità e la data della chat
+        // Scrive dentro il blocco la modalità e la data della chat e presenta anche ul bottone per eliminare la chat
         item.innerHTML = `
-            <strong>${chat.modalita}</strong>
-            <span>${chat.creato_il}</span>
+            <div class="history-content">
+                <strong>${chat.modalita}</strong>
+                <span>${chat.creato_il}</span>
+            </div>
+
+            <button class="delete-chat-btn">🗑</button>
         `;
 
         // Aggiunge un evento: quando clicchi su quella chat nello storico, viene eseguito il codice dentro
@@ -134,6 +138,23 @@ async function caricaStorico() {
 
             addMessage("Studente", chat.messaggio_utente, "user-message");
             addMessage("AI Tutor", chat.risposta_ai, "ai-message", chat.modalita);
+        });
+
+        // Cerca dentro item, quindi della singola chat, il bottone per eliminarla con la classe '.delete-chat-btn'
+        const deleteBtn = item.querySelector(".delete-chat-btn");
+
+        // Elimina la chat quando viene cliccato l'apposito bottone
+        deleteBtn.addEventListener("click", async (event) => {
+            // Serve a evitare che cliccando sul cestino venga aperta anche la chat.
+            event.stopPropagation();
+
+            // Invia una richiesta al backend Flask per eliminare quella chat.
+            await fetch(`http://127.0.0.1:5000/api/delete-chat/${chat.id}`, {
+                method: "DELETE"
+            });
+
+            // Dopo l’eliminazione, ricarica lo storico.
+            caricaStorico();
         });
 
         // Aggiunge il blocco creato dentro il contenitore dello storico.

@@ -318,3 +318,20 @@ small {
 .logout-btn:hover {
     background: #dc2626;
 }
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.delete-chat-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.delete-chat-btn:hover {
+    transform: scale(1.1);
+}

@@ -431,29 +431,48 @@ def history(user_id):
     conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
 
+    # Prende tutte le righe della tabella chats appartenenti a questo utente.
     cursor.execute("""
-        SELECT modalita, messaggio_utente, risposta_ai, creato_il
+        SELECT id, modalita, messaggio_utente, risposta_ai, creato_il
         FROM chats
         WHERE user_id = ?
         ORDER BY creato_il DESC
     """, (user_id,))
 
+    # Legge tutte le righe restituite dalla query
     chats = cursor.fetchall()
     conn.close()
 
     # Vettore che conterrà le chat
     history = []
 
-    # Le informazioni ricavate dalla tabella 'chats' verranno inserite nel vettore
+    # Scorre tutte le righe resituite dalla query
     for chat in chats:
         history.append({
-            "modalita": chat[0],
-            "messaggio_utente": chat[1],
-            "risposta_ai": chat[2],
-            "creato_il": chat[3]
+            "id": chat[0],
+            "modalita": chat[1],
+            "messaggio_utente": chat[2],
+            "risposta_ai": chat[3],
+            "creato_il": chat[4]
         })
 
     return jsonify(history), 200
+
+# Rotta API per eliminare le chat dallo storico
+@app.route("/api/delete-chat/<int:chat_id>", methods=["DELETE"])
+def delete_chat(chat_id):
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        DELETE FROM chats
+        WHERE id = ?
+    """, (chat_id,))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "Chat eliminata correttamente"}), 200
 
 # Funzione per la conferma dell'email
 def send_confirmation_email(to_email, token):
