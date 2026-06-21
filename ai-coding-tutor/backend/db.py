@@ -1,14 +1,11 @@
 import sqlite3
 
-# Connessione al database SQLite
 conn = sqlite3.connect("database.db")
 
-# Creazione del cursore per eseguire query SQL
 cursor = conn.cursor()
 
 cursor.execute("DROP TABLE IF EXISTS users")
 
-# Creazione della tabella dedicata agli utenti
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,7 +22,6 @@ CREATE TABLE IF NOT EXISTS users (
 )
 """)
 
-# Creazione della tabella dedicata alle chat degli utenti
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS chats (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,10 +34,8 @@ CREATE TABLE IF NOT EXISTS chats (
 )
 """)
 
-# Salva definitivamente le modifiche nel database
 conn.commit()
 
-# Chiude la connessione al database
 conn.close()
 
 print("Database inizializzato correttamente.")

@@ -1,34 +1,32 @@
-from flask import Flask, jsonify, request #Flask: serve per creare il server, jsonify:  per resituire oggetti JSON al front-end, request: serve per leggere i dati ricevuti dal front-end
-from flask_cors import CORS #CORS: serve al frontend JavaScript di comunicare con Flask.
-from google import genai #importo la libreria principale di Google GenAI
-from dotenv import load_dotenv #load_dotenv: serve per leggere variabili da un file 
-import os #os: serve per leggere variabili d’ambiente del sistema.
-import sqlite3 # Libreria usata per connettersi e interagire con il database SQLite
-from werkzeug.security import generate_password_hash # Funzione usata per generare l'hash della password prima di salvarla nel database durante la registrazione
-from werkzeug.security import check_password_hash # Funzione usata durante il login per verificare se la password inserita corrisponde all'hash salvato nel database
-import secrets # Serve per creare un token univoco, usato per la conferma dell'email
-import smtplib # Usato per utilizzare i servizi del protocollo SMTP
-from email.mime.text import MIMEText # Gestisce la creazione del contenuto dell'email.
+from flask import Flask, jsonify, request 
+from flask_cors import CORS 
+from google import genai 
+from dotenv import load_dotenv 
+import os 
+import sqlite3 
+from werkzeug.security import generate_password_hash 
+from werkzeug.security import check_password_hash 
+import secrets 
+import smtplib 
+from email.mime.text import MIMEText 
 
-load_dotenv() #leggo il file .env che contiene la key all'API AI
+load_dotenv() 
 
-app = Flask(__name__) # Creo l'app Flask affinché riceva le richieste dal front-end
-CORS(app) # Avvia CORS sull'app Flask
+app = Flask(__name__) 
+CORS(app) 
 
-client = genai.Client(api_key = os.getenv("GEMINI_API_KEY")) #Creo il client che si collegherà con Gemini e leggo la key contenuta nella variabile "GEMINI_API_KEY" nell'ambiente .env
+client = genai.Client(api_key = os.getenv("GEMINI_API_KEY")) 
 
-# Rotta API per la chat dell'utente
-@app.route('/api/chat', methods=['POST']) #Permette di avviare la funzione sottostante quando il front-end riceve una richiesta con il metodo: POST
+
+@app.route('/api/chat', methods=['POST']) 
 def chat():
 
-    data = request.get_json() #Leggo i dati JSON ricevuti dal front-end
+    data = request.get_json() 
 
-    #Distinguo il messaggio dalla modalità
     message = data.get('message', '')
     mode = data.get('mode', 'Tutor')
     user_id = data.get("user_id", '')
 
-    #Verifico la modalità selezionata e mando un prompt inerente all'API AI
     if mode == 'Tutor':
         system_prompt = """
             Sei un AI Coding Tutor per studenti universitari.
@@ -132,7 +130,6 @@ def chat():
             Non superare 8 righe.
         """
 
-    #Invio il prompt all'API AI, se vi è errore lo gestisco 
     try:
 
         prompt = f"""
@@ -149,15 +146,12 @@ def chat():
             Non aggiungere informazioni non richieste.
         """
 
-        ai_response = client.models.generate_content(model = "gemini-2.5-flash-lite", contents = prompt) #Invio la richiesta a gemini indicando il modello ed il contenuto tramite il client creato in precedenza
-
-        # Estraggo il testo dalla risposta ricevuta dall'AI
+        ai_response = client.models.generate_content(model = "gemini-2.5-flash-lite", contents = prompt) 
         ai_text = ai_response.text
 
         conn = sqlite3.connect("database.db")
         cursor = conn.cursor()
 
-        # Invio la query per il salvataggio della chat
         cursor.execute("""
             INSERT INTO chats (user_id, modalita, messaggio_utente, risposta_ai)
             VALUES (?, ?, ?, ?)
@@ -166,14 +160,11 @@ def chat():
         conn.commit()
         conn.close()
 
-        #Invio la risposta in formato JSON al front-end
         return jsonify({
-            "response": ai_text #Conservo in response solamente il testo della risposta
+            "response": ai_text 
         })
     
     
-
-    #Nel caso di errore
     except Exception as e:
 
         return jsonify({
@@ -182,67 +173,50 @@ def chat():
 
         })
     
-# Rotta API per la registrazione di un nuovo utente
-# Viene chiamata dal front-end quando l'utente compila il form di registrazione.
+
 @app.route("/api/register", methods=["POST"])
 def register():
 
-    # Recupera i dati inviati dal front-end in formato JSON.
+   
     data = request.get_json()
 
-    # Estrae dal JSON i singoli campi inseriti dall'utente.
     nome = data.get("nome")
     email = data.get("email")
     password = data.get("password")
 
-    # Controlla che tutti i campi obbligatori siano stati compilati.
-    # Se manca anche solo un campo, restituisce un messaggio di errore.
     if not nome or not email or not password:
         return jsonify({"error": "Compila tutti i campi"}), 400
 
-    # Cifra la password tramite hashing.
-    # In questo modo nel database non viene salvata la password originale.
     password_hash = generate_password_hash(password)
 
     # 
     token = secrets.token_urlsafe(32)
 
     try:
-        # Apre la connessione al database SQLite.
+
         conn = sqlite3.connect("database.db")
 
-        # Crea un cursore, cioè l'oggetto usato per eseguire query SQL.
         cursor = conn.cursor()
 
-        # Inserisce il nuovo utente nella tabella users.
-        # I punti interrogativi evitano problemi di sicurezza come SQL injection.
         cursor.execute("""
             INSERT INTO users (nome, email, password, email_verificata, token_conferma)
             VALUES (?, ?, ?, ?, ?)
         """, (nome, email, password_hash, 0, token))
 
-        # Invio l'email di conferma nella posta elettronica dell'utente
         send_confirmation_email(email, token)
 
-        # Salva definitivamente le modifiche nel database.
         conn.commit()
 
-        # Chiude la connessione al database.
         conn.close()
 
-        # Restituisce al front-end un messaggio di successo.
-        # Il codice 201 indica che la risorsa è stata creata correttamente.
         return jsonify({
             "message": "Registrazione quasi completata. Controlla la tua email per confermare l'account."
         }), 201
 
     except sqlite3.IntegrityError:
-        # Questo errore viene generato, ad esempio, se l'email è già presente
-        # nel database e la colonna email è impostata come UNIQUE.
         return jsonify({"error": "Email già registrata"}), 409
 
 
-# Rotta API per la conferma dell'email
 @app.route("/api/confirm-email/<token>", methods=["GET"])
 def confirm_email(token):
     conn = sqlite3.connect("database.db")
@@ -363,59 +337,46 @@ def confirm_email(token):
         </html>
         """
     
-# Rotta API per il login di un utente.
-# Viene chiamata dal front-end quando l'utente compila il form di login.
+
 @app.route("/api/login", methods=["POST"])
 def login():
 
-    # Salva i dati ricevuti dal front-end in formato JSON
     data = request.get_json()
 
-    # Raccolgo in due variabili email e password dell'utente
     email = data.get("email")
     password = data.get("password")
 
-    # Verifico che i campi siano compilati, in caso contrario invio un messaggio di errore
     if not email or not password:
         return jsonify({"error": "Compila tutti i campi"}), 400
 
-    # Mi connetto con il database SQLite
+
     conn = sqlite3.connect("database.db")
-    # Creo il cursore per interfacciarmi con il database
     cursor = conn.cursor()
 
-    # Invio la query al database
     cursor.execute("""
         SELECT id, nome, email, password, email_verificata
         FROM users
         WHERE email = ?
     """, (email,))
 
-    # Salvo l'utente
     user = cursor.fetchone()
-    # Chiudo la connessione con il database
     conn.close()
 
-    # Verifico che l'elemento non sia vuoto
     if user is None:
         return jsonify({"error": "Email o password non corretti"}), 401
 
-    # Raccolgo i vari campi dell'utente
     user_id = user[0]
     nome = user[1]
     email_db = user[2]
     password_hash = user[3]
     email_verificata = user[4]
 
-    # Verifico che l'email sia stata confermata
     if email_verificata == 0:
         return jsonify({"error": "Devi confermare la tua email prima di accedere"}), 403
 
-    # Verifico che la password sia corretta
     if not check_password_hash(password_hash, password):
         return jsonify({"error": "Email o password non corretti"}), 401
 
-    # Invio la risposta di successo al frontend
     return jsonify({
         "message": "Login effettuato con successo",
         "user": {
@@ -425,13 +386,12 @@ def login():
         }
     }), 200
 
-# Rotta API per mostrare lo storico delle chat dell'utente
+
 @app.route("/api/history/<int:user_id>", methods=["GET"])
 def history(user_id):
     conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
 
-    # Prende tutte le righe della tabella chats appartenenti a questo utente.
     cursor.execute("""
         SELECT id, modalita, messaggio_utente, risposta_ai, creato_il
         FROM chats
@@ -439,14 +399,11 @@ def history(user_id):
         ORDER BY creato_il DESC
     """, (user_id,))
 
-    # Legge tutte le righe restituite dalla query
     chats = cursor.fetchall()
     conn.close()
 
-    # Vettore che conterrà le chat
     history = []
 
-    # Scorre tutte le righe resituite dalla query
     for chat in chats:
         history.append({
             "id": chat[0],
@@ -458,7 +415,6 @@ def history(user_id):
 
     return jsonify(history), 200
 
-# Rotta API per eliminare le chat dallo storico
 @app.route("/api/delete-chat/<int:chat_id>", methods=["DELETE"])
 def delete_chat(chat_id):
     conn = sqlite3.connect("database.db")
@@ -474,15 +430,12 @@ def delete_chat(chat_id):
 
     return jsonify({"message": "Chat eliminata correttamente"}), 200
 
-# Funzione per la conferma dell'email
 def send_confirmation_email(to_email, token):
-    # Crea il link di conferma.
+
     link = f"http://127.0.0.1:5000/api/confirm-email/{token}"
 
-    # Imposta l’oggetto dell’email.
     subject = "Conferma registrazione AI Coding Tutor"
 
-    # Crea il testo dell’email.
     body = f"""
 Ciao,
 
@@ -494,22 +447,18 @@ Clicca sul link seguente per confermare la tua email:
 
 Se non hai richiesto questa registrazione, ignora questa email.
 """
-    # Crea il messaggio email vero e proprio
+
     msg = MIMEText(body, "plain", "utf-8")
-    # Imposto i vari campi
+
     msg["Subject"] = subject
     msg["From"] = os.getenv("EMAIL_USER")
     msg["To"] = to_email
 
-    # Apre una connessione al server SMTP di Gmail
+
     with smtplib.SMTP("smtp.gmail.com", 587) as server:
-        # Attiva la connessione sicura.
         server.starttls()
-        # Effettua il login all’account email mittente e Legge dal .env
         server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASSWORD"))
-        # Invia l’email al destinatario.
         server.send_message(msg)
 
-#Avvio del server Flask
 if __name__ == '__main__':
     app.run(debug=True)
