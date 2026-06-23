@@ -27,6 +27,11 @@
                 </div>
             </header>
 
+            <div class="header-actions">
+                <span class="status">Online</span>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+
             <section id="chatMessages" class="chat-messages">
                 <div class="message ai-message">
                     <strong>AI Tutor</strong>
@@ -52,6 +57,18 @@
                 <button type="submit">Invia</button>
             </form>
         </main>
+
+        <aside class="history-sidebar">
+
+           <button id="newChatBtn" class="new-chat-btn">+ Nuova Chat</button>
+
+                <h3 class="history-title">Storico chat</h3>
+
+                <div id="historyList"></div>
+
+            </div>
+
+        </aside>
 
     </div>
 

@@ -1,30 +1,47 @@
-const chatForm = document.getElementById('chatForm'); // Il form della chat
-const messageInput = document.getElementById('messageInput'); // Il campo dove viene scritto il messaggio
-const chatMessages = document.getElementById('chatMessages'); // Il contenitore dove vengono mostrati i messaggi
-const modeButtons = document.querySelectorAll('.mode-btn'); // I pulsanti con le varie modalità
+const utenteLoggato = JSON.parse(localStorage.getItem("utenteLoggato"));
 
-let selectedMode = 'Tutor'; // Selezione come modalità predefinita 'Tutor'
+if (!utenteLoggato) {
+    alert("Devi effettuare il login per accedere alla chat.");
+    window.location.href = "login.html";
+}
 
-// Gestisco il cambio di modalità
+const chatForm = document.getElementById('chatForm'); 
+const messageInput = document.getElementById('messageInput'); 
+const chatMessages = document.getElementById('chatMessages'); 
+const modeButtons = document.querySelectorAll('.mode-btn'); 
+const historyList = document.getElementById("historyList"); 
+const newChatBtn = document.getElementById("newChatBtn"); 
+const logoutBtn = document.getElementById("logoutBtn"); 
+
+let selectedMode = 'Tutor'; 
+
 modeButtons.forEach(button => {
-    button.addEventListener('click', () => { // Identifico quale pulsante viene cliccato
-        modeButtons.forEach(btn => btn.classList.remove('active')); // Rimuovo la classe 'active' da tutti i pulsanti
-        button.classList.add('active'); // Aggiungo 'active' solo al pulsate cliccato
-        selectedMode = button.dataset.mode; // Aggiorno la modalità selezionata
+    button.addEventListener('click', () => { 
+        modeButtons.forEach(btn => btn.classList.remove('active')); 
+        button.classList.add('active'); 
+        selectedMode = button.dataset.mode; 
     });
 });
 
-// Quando il form viene inviato viene eseguita la funzione sottostante
 chatForm.addEventListener('submit', async (event) => {
-    event.preventDefault(); // Impedisce al browser di ricaricare la pagina all'invio del form
+    event.preventDefault();
 
-    const message = messageInput.value.trim(); // Rimuovo tutti gli spazi iniziali e finali
-    if (!message) return; // Se il messaggio è vuoto esco dalla funzione
+    const utente = JSON.parse(localStorage.getItem("utenteLoggato"));
 
-    addMessage('Studente', message, 'user-message'); // Mostro nella chat il messaggio dello studente
-    messageInput.value = ''; // Svuoto l'input
+    if (!utente) {
+        alert("Devi effettuare il login.");
+        window.location.href = "login.html";
+        return;
+    }
 
-    // Effettuo una richiesta HTTP POST al server Flask nel formato JSON
+    const message = messageInput.value.trim(); 
+    if (!message) return; 
+
+    addMessage('Studente', message, 'user-message'); 
+    messageInput.value = ''; 
+
+    const thinkingMessage = addMessage('AI Tutor', 'Sta pensando...', 'ai-message');
+
     try {
         const response = await fetch('http://localhost:5000/api/chat', {
             method: 'POST',
@@ -33,29 +50,103 @@ chatForm.addEventListener('submit', async (event) => {
             },
             body: JSON.stringify({
                 message: message,
-                mode: selectedMode
+                mode: selectedMode,
+                user_id: utente.id
             })
         });
 
-        const data = await response.json(); // Leggo la risposta ricevuta dal server Flask
+        const data = await response.json(); 
         
-        // Mostro la risposta nella chat, e nel caso di errore la gestisco
+        thinkingMessage.remove();
+
         addMessage('AI Tutor', data.response || 'Errore nella risposta.', 'ai-message', selectedMode);
+        caricaStorico();
     } catch (error) {
+        thinkingMessage.remove();
         addMessage('Sistema', 'Impossibile collegarsi al server Flask.', 'ai-message');
     }
 });
 
-// Con questa funzione creo il messaggio HTML da mostrare in chat
-function addMessage(sender, text, className, mode = '') {
-    const messageElement = document.createElement('div');
-    messageElement.classList.add('message', className);
 
-    messageElement.innerHTML = `
+function addMessage(sender, text, className, mode = null) {
+    const messageDiv = document.createElement('div'); 
+    messageDiv.classList.add('message', className); 
+
+    messageDiv.innerHTML = `
         <strong>${sender}</strong>
-        ${mode ? `<small>Modalità: ${mode}</small>` : ''}
+        ${mode ? `<span class="mode-label">${mode}</span>` : ""}
         <p>${text}</p>
     `;
 
-    chatMessages.appendChild(messageElement);
+    chatMessages.appendChild(messageDiv);
+
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    return messageDiv;
 }
+
+
+async function caricaStorico() {
+
+    const utente = JSON.parse(localStorage.getItem("utenteLoggato"));
+
+    if (!utente) return;
+
+    const response = await fetch(`http://127.0.0.1:5000/api/history/${utente.id}`);
+
+    const history = await response.json();
+
+    historyList.innerHTML = "";
+
+    history.forEach(chat => {
+
+        const item = document.createElement("div");
+        item.classList.add("history-item");
+
+        item.innerHTML = `
+            <div class="history-content">
+                <strong>${chat.modalita}</strong>
+                <span>${chat.creato_il}</span>
+            </div>
+
+            <button class="delete-chat-btn">🗑</button>
+        `;
+
+        item.addEventListener("click", () => {
+            chatMessages.innerHTML = "";
+
+            addMessage("Studente", chat.messaggio_utente, "user-message");
+            addMessage("AI Tutor", chat.risposta_ai, "ai-message", chat.modalita);
+        });
+
+        const deleteBtn = item.querySelector(".delete-chat-btn");
+
+        deleteBtn.addEventListener("click", async (event) => {
+            event.stopPropagation();
+
+            await fetch(`http://127.0.0.1:5000/api/delete-chat/${chat.id}`, {
+                method: "DELETE"
+            });
+
+            caricaStorico();
+        });
+
+        historyList.appendChild(item);
+    });
+
+}
+
+newChatBtn.addEventListener("click", () => {
+    chatMessages.innerHTML = "";
+
+    addMessage("AI Tutor", "Come posso aiutarti?", "ai-message");
+
+    messageInput.value = "";
+});
+
+logoutBtn.addEventListener("click", () => {
+    localStorage.removeItem("utenteLoggato");
+    window.location.href = "login.html";
+});
+
+caricaStorico();
